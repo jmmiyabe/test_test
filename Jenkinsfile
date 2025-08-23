@@ -29,11 +29,7 @@ pipeline {
         stage('Prepare Env') {
             steps {
                 sh '''
-                    if [ ! -f .env ]; then
-                        cp .env.testing .env
-                    fi
-
-                    # Fix permissions
+                    cp .env.testing .env
                     chmod -R 777 storage bootstrap/cache .env
                 '''
             }
