@@ -14,6 +14,18 @@ pipeline {
     }
 
     stages {
+        stage('Install Dependencies') {
+            steps {
+                sh 'composer install --no-interaction --prefer-dist --optimize-autoloader'
+            }
+        }
+
+        stage('Start Sail') {
+            steps {
+                sh './vendor/bin/sail up -d'
+            }
+        }
+
         stage('Prepare Env') {
             steps {
                 sh '''
@@ -35,20 +47,6 @@ pipeline {
                         sed -i "s|^APP_KEY=.*|APP_KEY=$key|" .env
                     fi
                 '''
-            }
-        }
-
-
-
-        stage('Install Dependencies') {
-            steps {
-                sh 'composer install --no-interaction --prefer-dist --optimize-autoloader'
-            }
-        }
-
-        stage('Start Sail') {
-            steps {
-                sh './vendor/bin/sail up -d'
             }
         }
 
