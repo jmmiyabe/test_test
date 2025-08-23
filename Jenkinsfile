@@ -18,11 +18,27 @@ pipeline {
             steps {
                 sh '''
                     if [ ! -f .env ]; then
-                        cp .env.testing .env
+                        cp .env.example .env
+                    fi
+
+                    # Fix permissions
+                    chmod -R 777 storage bootstrap/cache .env
+                '''
+            }
+        }
+
+        stage('Generate Key') {
+            steps {
+                sh '''
+                    if ! grep -q "APP_KEY=" .env || [ -z "$(grep 'APP_KEY=' .env | cut -d '=' -f2)" ]; then
+                        key=$(./vendor/bin/sail artisan key:generate --show)
+                        sed -i "s|^APP_KEY=.*|APP_KEY=$key|" .env
                     fi
                 '''
             }
         }
+
+
 
         stage('Install Dependencies') {
             steps {
