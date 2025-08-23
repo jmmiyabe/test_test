@@ -14,6 +14,16 @@ pipeline {
     }
 
     stages {
+        stage('Prepare Env') {
+            steps {
+                sh '''
+                    if [ ! -f .env ]; then
+                        cp .env.testing .env
+                    fi
+                '''
+            }
+        }
+
         stage('Install Dependencies') {
             steps {
                 sh 'composer install --no-interaction --prefer-dist --optimize-autoloader'
@@ -23,25 +33,30 @@ pipeline {
         stage('Start Sail') {
             steps {
                 sh './vendor/bin/sail up -d'
-                sh './vendor/bin/sail artisan key:generate'
-                sh './vendor/bin/sail artisan migrate:fresh --seed'
-                sh './vendor/bin/sail npm install'
-                sh './vendor/bin.sail npm audit fix'
-                sh './vendor/bin/sail npm run build'
+            }
+        }
+
+        stage('Setup App') {
+            steps {
+                sh '''
+                    ./vendor/bin/sail artisan key:generate
+                    ./vendor/bin/sail artisan migrate:fresh --seed
+                    ./vendor/bin/sail npm install
+                    ./vendor/bin/sail npm audit fix || true
+                    ./vendor/bin/sail npm run build
+                '''
             }
         }
 
         stage('Unit Test') {
             steps {
-                sh './vendor/bin/sail exec laravel.test php artisan test'
+                sh './vendor/bin/sail artisan test'
             }
         }
 
         stage('Integration Test') {
             steps {
-                dir('PRIMS') {
-                    sh 'curl -f http://localhost || exit 1'
-                }
+                sh 'curl -f http://localhost || exit 1'
             }
         }
 
@@ -66,9 +81,7 @@ pipeline {
 
     post {
         always {
-            steps {
-                sh './vendor/bin/sail down || true'
-            }
+            sh './vendor/bin/sail down || true'
         }
     }
 }
