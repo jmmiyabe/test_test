@@ -1,14 +1,43 @@
 pipeline {
     agent any
 
+    environment {
+        COMPOSE_FILE = 'docker-compose.yml'
+        WWWUSER = '1000'
+        WWWGROUP = '1000'
+        DB_CONNECTION = 'mysql'
+        DB_HOST = 'mysql'
+        DB_PORT = '3306'
+        DB_DATABASE = 'laravel'
+        DB_USERNAME = 'sail'
+        DB_PASSWORD = 'password'
+    }
+
     stages {
-        stage('Build') {
+        stage('Install Dependencies') {
             steps {
-                echo 'Building the application...'
+                sh 'composer install --no-interaction --prefer-dist --optimize-autoloader'
+            }
+        }
+
+        stage('Start Sail') {
+            steps {
+                sh './vendor/bin/sail up -d'
+            }
+        }
+
+        stage('Wait for Containers') {
+            steps {
                 dir('PRIMS') {
-                    bat 'composer install'
-                    bat 'npm install'
-                    bat 'npm run build'
+                    sh '''
+                    echo "Waiting for laravel.test container..."
+                    until ./vendor/bin/sail ps | grep laravel.test | grep Up; do sleep 5; done
+
+                    echo "Waiting for MySQL..."
+                    until ./vendor/bin/sail exec mysql mysqladmin ping -h mysql -u sail -ppassword --silent; do sleep 5; done
+
+                    echo "All containers are ready!"
+                    '''
                 }
             }
         }
@@ -16,41 +45,43 @@ pipeline {
         stage('Unit Test') {
             steps {
                 dir('PRIMS') {
-                    bat 'php artisan migrate --env=testing'
-                    bat 'vendor\\bin\\phpunit.bat --coverage-text'
+                    sh './vendor/bin/sail exec laravel.test php artisan test'
                 }
-            }
-        }
-
-        stage('Deploy To Test Env') {
-            steps {
-                echo 'Deploying to test environment...'
-                bat 'scp -r . user@test-server:/var/www/test-app'
             }
         }
 
         stage('Integration Test') {
             steps {
-                echo 'Running integration tests...'
                 dir('PRIMS') {
-                    bat 'php artisan test --testsuite=Feature'
+                    sh 'curl -f http://localhost || exit 1'
                 }
             }
         }
 
         stage('Create Docker Image') {
             steps {
-                echo 'Building Docker image...'
-                dir('PRIMS') {
-                    bat 'docker build -t prims-app:latest .'
-                }
+                sh 'docker build -t prims-app:latest .'
+            }
+        }
+
+        stage('Commit Jenkinsfile') {
+            steps {
+                sh '''
+                git config user.email "jmmiyabe@student.apc.edu.ph"
+                git config user.name "jmmiyabe"
+                git add Jenkinsfile
+                git commit -m "Add Jenkinsfile" || true
+                git push origin HEAD:main
+                '''
             }
         }
     }
 
     post {
         always {
-            echo 'Pipeline completed.'
+            steps {
+                sh './vendor/bin/sail down || true'
+            }
         }
     }
 }
