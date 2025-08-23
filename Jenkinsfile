@@ -50,7 +50,7 @@ pipeline {
             steps {
                 sh '''
                     ./vendor/bin/sail artisan key:generate
-                    ./vendor/bin/sail artisan migrate:fresh --seed
+                    ./vendor/bin/sail artisan migrate:fresh --seed --env=testing
                     ./vendor/bin/sail root-shell -c "chown -R sail:sail /var/www/html"
                     ./vendor/bin/sail npm install
                     ./vendor/bin/sail npm audit fix || true
