@@ -30,7 +30,7 @@ pipeline {
             steps {
                 sh '''
                     if [ ! -f .env ]; then
-                        cp .env.example .env
+                        cp .env.testing .env
                     fi
 
                     # Fix permissions
