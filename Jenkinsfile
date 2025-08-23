@@ -55,7 +55,7 @@ pipeline {
         stage('Setup App') {
             steps {
                 sh '''
-                    ./vendor/bin/sail artisan key:generat
+                    ./vendor/bin/sail artisan key:generate
                     ./vendor/bin/sail artisan migrate:fresh --seed
                     ./vendor/bin/sail root-shell -c "chown -R sail:sail /var/www/html"
                     ./vendor/bin/sail npm install
