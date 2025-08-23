@@ -26,22 +26,6 @@ pipeline {
             }
         }
 
-        stage('Wait for Containers') {
-            steps {
-                dir('PRIMS') {
-                    sh '''
-                    echo "Waiting for laravel.test container..."
-                    until bash vendor/bin/sail ps | grep laravel.test | grep Up; do sleep 5; done
-
-                    echo "Waiting for MySQL..."
-                    bash vendor/bin/sail exec mysql mysqladmin ping -h mysql -u sail -ppassword --silent
-
-                    echo "All containers are ready!"
-                    '''
-                }
-            }
-        }
-
         stage('Unit Test') {
             steps {
                 dir('PRIMS') {
