@@ -56,11 +56,6 @@ pipeline {
             steps {
                 sh '''
                     ./vendor/bin/sail artisan key:generate
-                    # Wait until MySQL is ready
-                    until ./vendor/bin/sail mysqladmin ping -hmysql --silent; do
-                        echo "Waiting for MySQL to be ready..."
-                        sleep 3
-                    done
                     ./vendor/bin/sail artisan migrate:fresh --seed
                     ./vendor/bin/sail root-shell -c "chown -R sail:sail /var/www/html"
                     ./vendor/bin/sail npm install
