@@ -23,6 +23,11 @@ pipeline {
         stage('Start Sail') {
             steps {
                 sh './vendor/bin/sail up -d'
+                sh './vendor/bin/sail artisan key:generate'
+                sh './vendor/bin/sail artisan migrate:fresh --seed'
+                sh './vendor/bin/sail npm install'
+                sh './vendor/bin.sail npm audit fix'
+                sh './vendor/bin/sail npm run build'
             }
         }
 
