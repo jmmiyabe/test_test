@@ -1,4 +1,3 @@
-# Use PHP with Apache
 FROM php:8.2-apache
 
 # Enable Apache rewrite module
@@ -23,6 +22,9 @@ RUN composer install --no-dev --optimize-autoloader
 
 # Laravel storage permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
+
+# Tell Apache to serve the Laravel /public folder
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
 # Expose port 80
 EXPOSE 80
